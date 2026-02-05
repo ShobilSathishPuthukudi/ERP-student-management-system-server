@@ -19,14 +19,14 @@ export const createStudentValidator = [
         .notEmpty().withMessage('Academic Course is required')
         .isMongoId().withMessage('Invalid course ID format'),
     body('batchId')
-        .optional()
+        .optional({ checkFalsy: true })
         .isMongoId().withMessage('Invalid batch ID format'),
     body('status')
         .optional()
         .isIn(allowedStatus).withMessage(`Status must be one of: ${allowedStatus.join(', ')}`),
     body('dob')
         .notEmpty().withMessage('Date of birth is required')
-        .isISO8601().withMessage('Invalid date format (ISO8601)'),
+        .matches(/^\d{2}-\d{2}-\d{4}$/).withMessage('Invalid date format (DD-MM-YYYY)'),
     body('enrolledCourses')
         .optional()
         .isArray().withMessage('Enrolled courses must be an array'),
@@ -49,7 +49,7 @@ export const updateStudentValidator = [
         .optional()
         .isMongoId().withMessage('Invalid course ID format'),
     body('batchId')
-        .optional()
+        .optional({ checkFalsy: true })
         .isMongoId().withMessage('Invalid batch ID format'),
     body('status')
         .optional()

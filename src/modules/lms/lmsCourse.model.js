@@ -48,7 +48,7 @@ const lmsCourseSchema = new mongoose.Schema(
         category: {
             type: String,
             required: true,
-            enum: ['Engineering', 'Business', 'Art', 'Computer Science', 'Language', 'Science', 'Other']
+            enum: ['Engineering', 'Business', 'Art', 'Computer Science', 'Language', 'Science', 'Mathematics', 'Other']
         },
         price: {
             type: Number,

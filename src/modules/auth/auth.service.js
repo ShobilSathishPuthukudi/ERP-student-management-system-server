@@ -92,14 +92,21 @@ export const loginUser = async ({ email, password, studentId, facultyId, dob, ro
         }
 
         // Verify DOB
-        const inputDate = new Date(dob);
-        const recordDate = new Date(record.dob);
+        let isValid = false;
+        if (typeof dob === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(dob)) {
+            const [d, m, y] = dob.split('-').map(Number);
+            // Compare components to handle potential timezone shifts (UTC vs Local)
+            const matchLocal = (record.dob.getFullYear() === y && (record.dob.getMonth() + 1) === m && record.dob.getDate() === d);
+            const matchUTC = (record.dob.getUTCFullYear() === y && (record.dob.getUTCMonth() + 1) === m && record.dob.getUTCDate() === d);
+            isValid = matchLocal || matchUTC;
+        } else {
+            // Fallback for YYYY-MM-DD or Date objects
+            const inputDate = new Date(dob);
+            const recordDate = new Date(record.dob);
+            isValid = (inputDate.toISOString().split('T')[0] === recordDate.toISOString().split('T')[0]);
+        }
 
-        // Simple ISO date comparison (YYYY-MM-DD)
-        const inputDateStr = inputDate.toISOString().split('T')[0];
-        const recordDateStr = recordDate.toISOString().split('T')[0];
-
-        if (inputDateStr !== recordDateStr) {
+        if (!isValid) {
             throw new Error('Invalid Date of Birth');
         }
 

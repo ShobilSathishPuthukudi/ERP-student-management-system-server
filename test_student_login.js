@@ -12,7 +12,7 @@ const simulateStudentLogin = async () => {
         const credentials = {
             email: 'student_demo1@erpdemo.com',
             studentId: 'STU0001',
-            dob: '2001-02-01',
+            dob: '01-02-2001', // UTC match for Feb 02, 2001 IST
             password: null,
             facultyId: null
         };

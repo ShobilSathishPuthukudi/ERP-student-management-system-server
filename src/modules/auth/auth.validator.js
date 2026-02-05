@@ -52,5 +52,5 @@ export const loginValidator = [
     body('dob')
         .if((value, { req }) => ['student', 'faculty'].includes(req.body.role))
         .notEmpty().withMessage('Date of Birth is required')
-        .isISO8601().withMessage('Invalid date format (YYYY-MM-DD)'),
+        .matches(/^\d{2}-\d{2}-\d{4}$/).withMessage('Invalid date format (DD-MM-YYYY)'),
 ];

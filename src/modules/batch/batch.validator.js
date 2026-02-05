@@ -13,7 +13,7 @@ export const createBatchValidator = [
         .isMongoId().withMessage('Invalid Faculty ID format'),
     body('startDate')
         .notEmpty().withMessage('Start date is required')
-        .isISO8601().withMessage('Invalid date format (ISO8601 required)'),
+        .matches(/^\d{2}-\d{2}-\d{4}$/).withMessage('Invalid date format (DD-MM-YYYY)'),
     body('status')
         .optional()
         .isIn(['Upcoming', 'Active', 'Completed']).withMessage('Invalid status'),

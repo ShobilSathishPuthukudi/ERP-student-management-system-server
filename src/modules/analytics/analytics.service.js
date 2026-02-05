@@ -31,7 +31,11 @@ export const getAnalyticsOverviewService = async () => {
         Batch.countDocuments(),
         Fee.find(),
         Student.find({ createdAt: { $gte: sixMonthsAgo } }, 'createdAt'),
-        Attendance.find({ date: { $gte: new Date(new Date().setDate(new Date().getDate() - 7)) } }), // Last 7 days
+        Attendance.find({
+            date: {
+                $gte: new Date(new Date().setHours(0, 0, 0, 0) - 7 * 24 * 60 * 60 * 1000)
+            }
+        }), // Last 7 days including today
         Student.find().sort({ createdAt: -1 }).limit(3).lean(),
         Faculty.find().sort({ createdAt: -1 }).limit(3).lean(),
         Fee.find().sort({ createdAt: -1 }).limit(3).populate('studentId', 'fullName').lean()
@@ -122,6 +126,30 @@ export const getAnalyticsOverviewService = async () => {
         }))
     ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 6);
 
+    const attendanceLogMap = {};
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const last7Days = [];
+
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dayName = dayNames[d.getDay()];
+        last7Days.push(dayName);
+        attendanceLogMap[dayName] = 0;
+    }
+
+    allAttendance.forEach(session => {
+        const dayName = dayNames[new Date(session.date).getDay()];
+        if (attendanceLogMap[dayName] !== undefined) {
+            attendanceLogMap[dayName] += session.students.filter(s => s.status === 'Present').length;
+        }
+    });
+
+    const attendanceLog = last7Days.map(day => ({
+        name: day,
+        value: attendanceLogMap[day]
+    }));
+
     return {
         kpis: {
             totalStudents,
@@ -138,6 +166,7 @@ export const getAnalyticsOverviewService = async () => {
             { name: 'Present', value: totalPresent || 1, color: '#10b981' },
             { name: 'Absent', value: totalAbsent || 0, color: '#ef4444' }
         ],
+        attendanceLog,
         recentActivity: activities
     };
 };

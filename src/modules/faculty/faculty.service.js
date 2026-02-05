@@ -25,13 +25,22 @@ export const createFaculty = async (data) => {
         isActive: true,
     });
 
+    // Parse DD-MM-YYYY if provided as string
+    let birthDate;
+    if (typeof dob === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(dob)) {
+        const [d, m, y] = dob.split('-').map(Number);
+        birthDate = new Date(Date.UTC(y, m - 1, d));
+    } else {
+        birthDate = new Date(dob);
+    }
+
     const faculty = await Faculty.create({
         userId: user._id,
         facultyId,
         fullName,
         email: email.toLowerCase().trim(),
         phone,
-        dob,
+        dob: birthDate,
         designation,
         department,
         experienceYears: data.experienceYears || 0,

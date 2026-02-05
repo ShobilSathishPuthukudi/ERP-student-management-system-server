@@ -23,8 +23,8 @@ const rl = readline.createInterface({
 
 const askConfirmation = () => {
     return new Promise((resolve) => {
-        rl.question('⚠️ This will CLEAR Students, Faculty, Courses, Batches, Fees, and Attendance. Are you sure? (yes/no): ', (answer) => {
-            resolve(answer.toLowerCase() === 'yes');
+        rl.question('⚠️ This will CLEAR and REPAIR all ERP data (preserving admin). Type YES to proceed: ', (answer) => {
+            resolve(answer.toUpperCase() === 'YES');
         });
     });
 };
@@ -33,9 +33,8 @@ const getRandomDate = (start, end) => {
     return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 };
 
-const seedERP = async () => {
-    // Basic Environment Check
-    if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'dev') {
+const seed = async () => {
+    if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'dev' && process.env.NODE_ENV !== undefined) {
         console.error('❌ Seeder can only be run in development environment.');
         process.exit(1);
     }
@@ -48,10 +47,9 @@ const seedERP = async () => {
 
     try {
         await mongoose.connect(process.env.MONGO_URI);
-        console.log('🔗 Connected to MongoDB...');
+        console.log('Connected to MongoDB for Repair & Seeding...');
 
-        // Clear existing data EXCEPT Admin users
-        console.log('🧹 Clearing existing collections...');
+        // Clear existing ERP records (preserve admin accounts)
         await Promise.all([
             Student.deleteMany({}),
             Faculty.deleteMany({}),
@@ -62,195 +60,170 @@ const seedERP = async () => {
             User.deleteMany({ role: { $in: ['faculty', 'student'] } })
         ]);
 
-        const password = await hashPassword('password123');
+        console.log('Broken test data cleared.');
 
-        // 1. Seed Courses (6 Courses with strict validation)
+        // 1. Generate COMPLETE Courses
         const coursesData = [
-            {
-                courseName: 'Full Stack Web Dev',
-                duration: '6 Months',
-                mode: 'Hybrid',
-                feeAmount: 48000,
-                category: 'Skill-Improvement',
-                department: 'Professional Development Center',
-                requirements: { minQualification: 'Graduation', hasLabWork: true }
-            },
-            {
-                courseName: 'Business Analytics',
-                duration: '2 Years',
-                mode: 'Online',
-                feeAmount: 42000,
-                category: 'Postgraduate',
-                department: 'General Academics',
-                requirements: { minQualification: 'Degree', hasLabWork: false }
-            },
-            {
-                courseName: 'Digital Marketing',
-                duration: '1 Year',
-                mode: 'Online',
-                feeAmount: 28000,
-                category: 'Skill-Improvement',
-                department: 'General Academics',
-                requirements: { minQualification: 'None', hasLabWork: false }
-            },
-            {
-                courseName: 'UI/UX Design Masterclass',
-                duration: '6 Months',
-                mode: 'Hybrid',
-                feeAmount: 35000,
-                category: 'Skill-Improvement',
-                department: 'School of Fine Arts',
-                requirements: { minQualification: '12th Pass', hasLabWork: true }
-            },
-            {
-                courseName: 'Clinical Psychology',
-                duration: '2 Years',
-                mode: 'Offline',
-                feeAmount: 55000,
-                category: 'Postgraduate',
-                department: 'Humanities & Social Sciences',
-                requirements: { minQualification: 'Psychology Graduate', hasLabWork: false }
-            },
-            {
-                courseName: 'Basic Anatomy',
-                duration: '6 Months',
-                mode: 'Offline',
-                feeAmount: 50000,
-                category: 'Undergraduate',
-                department: 'Medical & Allied Sciences',
-                requirements: { minQualification: '12th Science', hasLabWork: true }
-            }
+            { courseName: 'Full Stack Development', courseCode: 'FSD-001', durationMonths: 6, credits: 24, feeAmount: 45000, department: 'School of Engineering', description: 'Advanced web tech and systems design.', status: 'active' },
+            { courseName: 'Digital Marketing Essentials', courseCode: 'DM-002', durationMonths: 3, credits: 12, feeAmount: 25000, department: 'Business Management', description: 'SEO, SEM, and social media branding.', status: 'active' },
+            { courseName: 'Professional Nursing', courseCode: 'NS-003', durationMonths: 12, credits: 60, feeAmount: 85000, department: 'Medical Sciences', description: 'Clinical practice and healthcare basics.', status: 'active' },
+            { courseName: 'Graphic & UI/UX Design', courseCode: 'DS-004', durationMonths: 4, credits: 16, feeAmount: 35000, department: 'Creative Arts', description: 'Visual communication and user interfaces.', status: 'active' },
+            { courseName: 'Cyber Security & Ethics', courseCode: 'CS-005', durationMonths: 8, credits: 32, feeAmount: 60000, department: 'Computer Science', description: 'Network protection and ethical hacking.', status: 'active' },
+            { courseName: 'Fine Arts & Painting', courseCode: 'FA-006', durationMonths: 24, credits: 80, feeAmount: 70000, department: 'Creative Arts', description: 'Traditional arts and modern expression.', status: 'active' },
+            { courseName: 'Psychology of Human Behavior', courseCode: 'PY-007', durationMonths: 24, credits: 90, feeAmount: 75000, department: 'Social Sciences', description: 'Understanding human mind and emotions.', status: 'active' },
+            { courseName: 'Robotics & Automation', courseCode: 'RB-008', durationMonths: 6, credits: 24, feeAmount: 55000, department: 'School of Engineering', description: 'Embedded systems and AI in robotics.', status: 'active' }
         ];
-        const courses = await Course.insertMany(coursesData);
-        console.log(`✅ Courses created: ${courses.length}`);
 
-        // 2. Seed Faculty (10 Faculty)
-        const facultyUsersData = [];
-        for (let i = 1; i <= 10; i++) {
-            facultyUsersData.push({
-                name: `ERP Faculty ${i}`,
-                email: `faculty_erp${i}@erp.com`,
-                password,
+        const courses = await Course.insertMany(coursesData);
+        console.log(`✅ Student-ready courses: ${courses.length}`);
+
+        // 2. Generate COMPLETE Faculty
+        const hashedPassword = await hashPassword('password123');
+        const facultyUsers = [];
+        for (let i = 1; i <= 12; i++) {
+            facultyUsers.push({
+                name: `Faculty Member ${i}`,
+                email: `faculty${i}@erpdemo.com`,
+                password: hashedPassword,
                 role: 'faculty',
                 isActive: true
             });
         }
-        const createdFacultyUsers = await User.insertMany(facultyUsersData);
+        const createdUsers = await User.insertMany(facultyUsers);
 
-        const facultyProfilesData = createdFacultyUsers.map((user, idx) => ({
+        const facultyProfiles = createdUsers.map((user, idx) => ({
             userId: user._id,
-            name: user.name,
+            facultyId: `FAC${idx.toString().padStart(4, '0')}`,
+            fullName: user.name,
             email: user.email,
+            phone: `+91-9888${idx.toString().padStart(6, '0')}`,
+            dob: new Date(1975 + (idx % 15), idx % 12, (idx % 28) + 1),
+            department: courses[idx % courses.length].department,
+            designation: idx % 3 === 0 ? 'Professor' : 'Assistant Professor',
+            experienceYears: 5 + (idx % 10),
             assignedCourses: [courses[idx % courses.length]._id],
             status: 'active'
         }));
-        await Faculty.insertMany(facultyProfilesData);
-        console.log(`✅ Faculty created: ${createdFacultyUsers.length}`);
+        const faculty = await Faculty.insertMany(facultyProfiles);
+        console.log(`✅ Faculty specialists: ${faculty.length}`);
 
-        // 3. Seed Students (50 Students)
-        const studentsData = [];
-        const educationLevels = ['UG', 'PG', 'Paramedical', 'Arts', 'Skill-Improvement'];
-        const fourMonthsAgo = new Date();
-        fourMonthsAgo.setMonth(fourMonthsAgo.getMonth() - 4);
-
-        for (let i = 1; i <= 50; i++) {
-            const course = courses[Math.floor(Math.random() * courses.length)];
-            studentsData.push({
-                name: `ERP Student ${i}`,
-                email: `student_erp${i}@erp.com`,
-                phone: `91876543${i.toString().padStart(2, '0')}`,
-                educationLevel: educationLevels[Math.floor(Math.random() * educationLevels.length)],
-                currentCourse: course._id,
-                enrolledCourses: [course._id],
-                status: 'active',
-                createdAt: getRandomDate(fourMonthsAgo, new Date())
-            });
-        }
-        const students = await Student.insertMany(studentsData);
-        console.log(`✅ Students created: ${students.length}`);
-
-        // 4. Seed Batches (4 Batches)
+        // 3. Generate COMPLETE Batches
         const batchesData = [];
-        for (let i = 1; i <= 4; i++) {
-            const course = courses[i - 1];
-            const facultyUser = createdFacultyUsers[i - 1];
-
-            const batchStudents = students.filter(s => s.currentCourse.toString() === course._id.toString()).map(s => s._id);
-
-            const start = new Date();
-            start.setMonth(start.getMonth() - 1);
-            const end = new Date(start);
-            end.setMonth(end.getMonth() + 6);
+        for (let i = 0; i < 6; i++) {
+            const course = courses[i % courses.length];
+            const fac = faculty[i % faculty.length];
+            const startDate = new Date();
+            startDate.setMonth(startDate.getMonth() - 2);
+            const endDate = new Date(startDate);
+            endDate.setMonth(endDate.getMonth() + course.durationMonths);
 
             batchesData.push({
-                batchName: `ERP-Batch-${course.courseName.split(' ')[0]}-${i}`,
+                batchName: `Batch-${course.courseCode}-${i + 1}`,
                 courseId: course._id,
-                facultyId: facultyUser._id,
-                students: batchStudents,
-                startDate: start,
-                endDate: end,
+                facultyId: fac._id,
+                students: [],
+                startDate,
+                endDate,
+                maxStudents: 30,
+                scheduleInfo: 'Mon-Fri, 9:00 AM - 1:00 PM',
                 status: 'Active'
             });
         }
         const batches = await Batch.insertMany(batchesData);
-        console.log(`✅ Batches created: ${batches.length}`);
+        console.log(`✅ Active batches: ${batches.length}`);
 
-        // 5. Seed Fees
-        const feesData = students.map(student => {
-            const course = courses.find(c => c._id.toString() === student.currentCourse.toString());
-            const totalFee = course.feeAmount;
-            const paidAmount = Math.floor(totalFee * (0.6 + Math.random() * 0.4));
-            const dueAmount = totalFee - paidAmount;
+        // 4. Generate COMPLETE Students
+        const studentsData = [];
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-            return {
+        for (let i = 1; i <= 60; i++) {
+            const batchIdx = i % batches.length;
+            const batch = batches[batchIdx];
+            const course = courses.find(c => c._id.equals(batch.courseId));
+            const createdAt = getRandomDate(sixMonthsAgo, new Date());
+
+            studentsData.push({
+                studentId: `STU${i.toString().padStart(4, '0')}`,
+                fullName: `Student FullName ${i}`,
+                email: `student_demo${i}@erpdemo.com`,
+                phone: `91002233${i.toString().padStart(2, '0')}`,
+                gender: i % 2 === 0 ? 'Female' : 'Male',
+                dob: new Date(2000 + (i % 5), i % 12, (i % 28) + 1),
+                address: `${i * 10}, Demo Street, Tech City - 400${i.toString().padStart(3, '0')}`,
+                courseId: course._id,
+                batchId: batch._id,
+                status: 'active',
+                createdAt
+            });
+        }
+        const students = await Student.insertMany(studentsData);
+
+        // Update batches with students
+        for (const batch of batches) {
+            const batchStudents = students.filter(s => s.batchId.equals(batch._id)).map(s => s._id);
+            await Batch.findByIdAndUpdate(batch._id, { $set: { students: batchStudents } });
+        }
+        console.log(`✅ Student records: ${students.length}`);
+
+        // 5. Generate Fees (for Analytics)
+        const feesData = [];
+        for (const student of students) {
+            const course = courses.find(c => c._id.equals(student.courseId));
+            const totalAmount = course.feeAmount;
+            const paidAmount = Math.floor(totalAmount * (0.6 + Math.random() * 0.4));
+            const pendingAmount = totalAmount - paidAmount;
+            const status = pendingAmount === 0 ? 'Paid' : 'Partial';
+
+            feesData.push({
                 studentId: student._id,
-                totalFee,
+                courseId: student.courseId,
+                totalFee: totalAmount,
                 paidAmount,
-                dueAmount,
-                paymentStatus: dueAmount === 0 ? 'Paid' : 'Partial'
-            };
-        });
+                dueAmount: pendingAmount,
+                paymentStatus: status,
+                createdAt: student.createdAt
+            });
+        }
         await Fee.insertMany(feesData);
-        console.log(`✅ Fees created: ${feesData.length}`);
+        console.log(`✅ Revenue records: ${feesData.length}`);
 
-        // 6. Seed Attendance (Last 20 Days)
+        // 6. Generate Attendance (for Charts)
         const attendanceData = [];
-        const twentyDaysAgo = new Date();
-        twentyDaysAgo.setDate(twentyDaysAgo.getDate() - 20);
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        for (let i = 0; i < 20; i++) {
-            const currentDate = new Date(twentyDaysAgo);
-            currentDate.setDate(currentDate.getDate() + i);
+        for (const batch of batches) {
+            for (let d = 0; d < 30; d++) {
+                const date = new Date(thirtyDaysAgo);
+                date.setDate(date.getDate() + d);
+                if (date.getDay() === 0) continue;
 
-            if (currentDate.getDay() === 0) continue;
-
-            for (const batch of batches) {
-                const studentsAttendance = batch.students.map(studentId => ({
-                    studentId,
-                    status: Math.random() > 0.2 ? 'Present' : 'Absent'
+                const batchStudents = students.filter(s => s.batchId.equals(batch._id));
+                const records = batchStudents.map(s => ({
+                    studentId: s._id,
+                    status: Math.random() > 0.15 ? 'Present' : 'Absent'
                 }));
 
-                if (studentsAttendance.length > 0) {
-                    attendanceData.push({
-                        batchId: batch._id,
-                        students: studentsAttendance,
-                        date: currentDate,
-                        markedBy: batch.facultyId
-                    });
-                }
+                attendanceData.push({
+                    batchId: batch._id,
+                    students: records,
+                    date,
+                    markedBy: createdUsers.find(u => u._id.equals(batch.facultyId))?._id || createdUsers[0]._id
+                });
             }
         }
         await Attendance.insertMany(attendanceData);
-        console.log(`✅ Attendance logs created: ${attendanceData.length}`);
+        console.log(`✅ Daily logs: ${attendanceData.length}`);
 
-        console.log('\n🌟 Relational ERP Seeding Completed Successfully! 🌟');
+        console.log('\n🚀 ALL SYSTEMS REPAIRED & SEEDED SUCCESSFULLY! 🚀');
         process.exit(0);
 
     } catch (error) {
-        console.error('\n❌ Seeding Failed!');
+        console.error('\n❌ Repair Failed!');
         console.error(error);
         process.exit(1);
     }
 };
 
-seedERP();
+seed();

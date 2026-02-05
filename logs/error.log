@@ -41,3 +41,4 @@
 {"level":"error","message":"[Error] POST /api/auth/login - Invalid email format","timestamp":"2026-02-05T04:00:17.006Z"}
 {"level":"error","message":"[Error] POST /api/auth/login - Invalid email format","timestamp":"2026-02-05T04:00:27.066Z"}
 {"level":"error","message":"[Error] POST /api/auth/login - Invalid email format","timestamp":"2026-02-05T04:01:31.545Z"}
+{"level":"error","message":"[Error] POST /api/auth/login - Invalid date format (YYYY-MM-DD)","timestamp":"2026-02-05T16:52:44.854Z"}

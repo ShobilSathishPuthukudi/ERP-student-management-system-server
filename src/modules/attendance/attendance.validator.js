@@ -6,7 +6,7 @@ export const markAttendanceValidator = [
         .isMongoId().withMessage('Invalid Batch ID format'),
     body('date')
         .notEmpty().withMessage('Date is required')
-        .isISO8601().withMessage('Invalid date format'),
+        .matches(/^\d{2}-\d{2}-\d{4}$/).withMessage('Invalid date format (DD-MM-YYYY)'),
     body('students')
         .isArray({ min: 1 }).withMessage('Students attendance array is required'),
     body('students.*.studentId')

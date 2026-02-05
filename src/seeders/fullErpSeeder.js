@@ -93,9 +93,11 @@ const seed = async () => {
 
         const facultyProfiles = createdUsers.map((user, idx) => ({
             userId: user._id,
+            facultyId: `FAC${idx.toString().padStart(4, '0')}`,
             fullName: user.name,
             email: user.email,
             phone: `+91-9888${idx.toString().padStart(6, '0')}`,
+            dob: new Date(1975 + (idx % 15), idx % 12, (idx % 28) + 1),
             department: courses[idx % courses.length].department,
             designation: idx % 3 === 0 ? 'Professor' : 'Assistant Professor',
             experienceYears: 5 + (idx % 10),

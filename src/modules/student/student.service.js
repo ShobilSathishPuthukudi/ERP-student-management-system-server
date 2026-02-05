@@ -21,13 +21,23 @@ export const createStudentService = async (studentData) => {
         enrolledCourses,
     } = studentData;
 
+    // Clean up empty optional fields
+    const finalBatchId = batchId === "" ? undefined : batchId;
+
     const existingStudent = await Student.findOne({ email });
     if (existingStudent) {
         throw new Error('Student with this email already exists');
     }
 
     // Age validation
-    const birthDate = new Date(dob);
+    // Parse DD-MM-YYYY if provided as string
+    let birthDate;
+    if (typeof dob === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(dob)) {
+        const [d, m, y] = dob.split('-').map(Number);
+        birthDate = new Date(Date.UTC(y, m - 1, d));
+    } else {
+        birthDate = new Date(dob);
+    }
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -72,10 +82,10 @@ export const createStudentService = async (studentData) => {
         email: normalizedEmail,
         phone,
         gender,
-        dob,
+        dob: birthDate,
         address,
         courseId,
-        batchId,
+        batchId: finalBatchId,
         status: status || 'active',
         enrolledCourses: enrolledCourses || [],
     });
@@ -136,6 +146,9 @@ export const getStudentByIdService = async (studentId) => {
  * Service to update an existing student record
  */
 export const updateStudentService = async (studentId, updateData) => {
+    if (updateData.batchId === "") {
+        updateData.batchId = undefined;
+    }
     const student = await Student.findByIdAndUpdate(studentId, updateData, {
         new: true,
         runValidators: true,
