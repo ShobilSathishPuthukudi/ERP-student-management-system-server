@@ -7,10 +7,13 @@ import { authorizeRoles } from '../../middlewares/role.middleware.js';
 
 const router = express.Router();
 
-router.post('/register', registerValidator, validate, register);
+// router.post('/register', registerValidator, validate, register);
 router.post('/login', loginValidator, validate, login);
 router.post('/refresh', refreshToken);
 router.post('/logout', authMiddleware, logout);
+
+// Debug
+
 
 // Admin-only user creation (for Faculty, Accountants, etc.)
 router.post('/users', authMiddleware, authorizeRoles('admin'), adminCreateUserValidator, validate, adminCreateUser);

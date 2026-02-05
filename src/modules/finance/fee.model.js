@@ -19,6 +19,17 @@ const feeSchema = new mongoose.Schema(
             type: Number,
             required: true,
         },
+        courseId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Course',
+        },
+        paymentDate: {
+            type: Date,
+        },
+        paymentMethod: {
+            type: String,
+            enum: ['Cash', 'Bank Transfer', 'Credit Card', 'Online'],
+        },
         paymentStatus: {
             type: String,
             enum: ['Paid', 'Pending', 'Partial'],

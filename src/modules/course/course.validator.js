@@ -1,53 +1,54 @@
 import { body } from 'express-validator';
 
-const allowedModes = ['Online', 'Offline', 'Hybrid'];
-const allowedCategories = [
-    'Postgraduate',
-    'Undergraduate',
-    'Paramedical',
-    'Arts',
-    'Skill-Improvement',
-];
 const allowedDepartments = [
-    'Medical & Allied Sciences',
-    'School of Fine Arts',
-    'Humanities & Social Sciences',
-    'Professional Development Center',
-    'General Academics',
+    'School of Engineering',
+    'Business Management',
+    'Medical Sciences',
+    'Creative Arts',
+    'Computer Science',
+    'Social Sciences',
+    'Humanities',
+    'General Academics'
 ];
+
+const allowedStatus = ['active', 'inactive'];
 
 export const createCourseValidator = [
     body('courseName')
         .notEmpty().withMessage('Course name is required')
         .isString().withMessage('Course name must be a string')
         .trim(),
-    body('duration')
-        .notEmpty().withMessage('Duration is required')
-        .isString().withMessage('Duration must be a string')
+    body('courseCode')
+        .notEmpty().withMessage('Course code is required')
+        .isString().withMessage('Course code must be a string')
         .trim(),
-    body('mode')
-        .notEmpty().withMessage('Mode is required')
-        .isIn(allowedModes).withMessage(`Mode must be one of: ${allowedModes.join(', ')}`),
+    body('durationMonths')
+        .notEmpty().withMessage('Duration in months is required')
+        .isNumeric().withMessage('Duration must be a number'),
+    body('credits')
+        .notEmpty().withMessage('Credits is required')
+        .isNumeric().withMessage('Credits must be a number'),
     body('feeAmount')
         .notEmpty().withMessage('Fee amount is required')
         .isNumeric().withMessage('Fee amount must be a number')
         .custom((value) => value >= 0).withMessage('Fee amount must be greater than or equal to 0'),
-    body('category')
-        .notEmpty().withMessage('Category is required')
-        .isIn(allowedCategories).withMessage(`Category must be one of: ${allowedCategories.join(', ')}`),
     body('department')
         .notEmpty().withMessage('Department is required')
-        .isIn(allowedDepartments).withMessage(`Department must be one of: ${allowedDepartments.join(', ')}`),
-    body('requirements.minQualification')
-        .notEmpty().withMessage('Minimum qualification is required')
-        .isString().withMessage('Minimum qualification must be a string')
+        .isIn(allowedDepartments).withMessage('Please select a valid department from the institutional list'),
+    body('description')
+        .optional()
+        .isString().withMessage('Description must be a string')
         .trim(),
-    body('requirements.hasLabWork')
+    body('status')
         .optional()
-        .isBoolean().withMessage('hasLabWork must be a boolean'),
-    body('isActive')
+        .isIn(allowedStatus).withMessage('Status must be either active or inactive'),
+    body('minAge')
         .optional()
-        .isBoolean().withMessage('isActive must be a boolean'),
+        .isNumeric().withMessage('Minimum age must be a number')
+        .custom((value) => value >= 15).withMessage('Minimum age cannot be below 15 years'),
+    body('maxAge')
+        .optional()
+        .isNumeric().withMessage('Maximum age must be a number'),
 ];
 
 export const updateCourseValidator = [
@@ -55,31 +56,35 @@ export const updateCourseValidator = [
         .optional()
         .isString().withMessage('Course name must be a string')
         .trim(),
-    body('duration')
+    body('courseCode')
         .optional()
-        .isString().withMessage('Duration must be a string')
+        .isString().withMessage('Course code must be a string')
         .trim(),
-    body('mode')
+    body('durationMonths')
         .optional()
-        .isIn(allowedModes).withMessage(`Mode must be one of: ${allowedModes.join(', ')}`),
+        .isNumeric().withMessage('Duration must be a number'),
+    body('credits')
+        .optional()
+        .isNumeric().withMessage('Credits must be a number'),
     body('feeAmount')
         .optional()
         .isNumeric().withMessage('Fee amount must be a number')
         .custom((value) => value >= 0).withMessage('Fee amount must be greater than or equal to 0'),
-    body('category')
-        .optional()
-        .isIn(allowedCategories).withMessage(`Category must be one of: ${allowedCategories.join(', ')}`),
     body('department')
         .optional()
-        .isIn(allowedDepartments).withMessage(`Department must be one of: ${allowedDepartments.join(', ')}`),
-    body('requirements.minQualification')
+        .isIn(allowedDepartments).withMessage('Invalid department'),
+    body('description')
         .optional()
-        .isString().withMessage('Minimum qualification must be a string')
+        .isString().withMessage('Description must be a string')
         .trim(),
-    body('requirements.hasLabWork')
+    body('status')
         .optional()
-        .isBoolean().withMessage('hasLabWork must be a boolean'),
-    body('isActive')
+        .isIn(allowedStatus).withMessage('Status must be either active or inactive'),
+    body('minAge')
         .optional()
-        .isBoolean().withMessage('isActive must be a boolean'),
+        .isNumeric().withMessage('Minimum age must be a number')
+        .custom((value) => value >= 15).withMessage('Minimum age cannot be below 15 years'),
+    body('maxAge')
+        .optional()
+        .isNumeric().withMessage('Maximum age must be a number'),
 ];

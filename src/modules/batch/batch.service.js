@@ -1,14 +1,11 @@
 import Batch from './batch.model.js';
 
 /**
- * Service to create a new batch.
- * @param {Object} batchData - Data to create the batch
- * @returns {Promise<Object>} The created batch document
+ * Service to create a new batch
  */
 export const createBatchService = async (batchData) => {
-    const { batchName, courseId, facultyId, startDate, endDate, status } = batchData;
+    const { batchName, courseId, facultyId, startDate, endDate, maxStudents, scheduleInfo, status } = batchData;
 
-    // Check for duplicate batch name
     const existingBatch = await Batch.findOne({ batchName });
     if (existingBatch) {
         throw new Error('A batch with this name already exists');
@@ -20,16 +17,19 @@ export const createBatchService = async (batchData) => {
         facultyId,
         startDate,
         endDate,
+        maxStudents,
+        scheduleInfo,
         status,
     });
 
-    return batch;
+    // Populate the newly created batch for UI consistency
+    return await Batch.findById(batch._id)
+        .populate('courseId', 'courseName courseCode')
+        .populate('facultyId', 'fullName email');
 };
 
 /**
- * Service to fetch all batches with optional filters.
- * @param {Object} filters - Filter criteria (courseId, facultyId, status)
- * @returns {Promise<Array>} List of batches
+ * Service to fetch all batches
  */
 export const getAllBatchesService = async (filters) => {
     const { courseId, facultyId, status } = filters;
@@ -40,42 +40,31 @@ export const getAllBatchesService = async (filters) => {
     if (status) query.status = status;
 
     return await Batch.find(query)
-        .populate('courseId', 'courseName')
-        .populate('facultyId', 'name email')
+        .populate('courseId', 'courseName courseCode')
+        .populate('facultyId', 'fullName email')
         .sort({ createdAt: -1 });
 };
 
 /**
- * Service to fetch batch details, including the student list.
- * @param {string} batchId - The ID of the batch
- * @returns {Promise<Object>} The batch document with populated data
+ * Service to fetch batch details
  */
 export const getBatchByIdService = async (batchId) => {
     const batch = await Batch.findById(batchId)
-        .populate('courseId', 'courseName')
-        .populate('facultyId', 'name email')
-        .populate('students', 'name email phone');
+        .populate('courseId', 'courseName courseCode department')
+        .populate('facultyId', 'fullName email phone designation')
+        .populate('students', 'fullName studentId email phone');
 
-    if (!batch) {
-        throw new Error('Batch not found');
-    }
-
+    if (!batch) throw new Error('Batch not found');
     return batch;
 };
 
 /**
- * Service to assign students to a batch.
- * @param {string} batchId - The ID of the batch
- * @param {Array<string>} studentIds - Array of student IDs to assign
- * @returns {Promise<Object>} The updated batch document
+ * Service to assign students to a batch
  */
 export const assignStudentsToBatchService = async (batchId, studentIds) => {
     const batch = await Batch.findById(batchId);
-    if (!batch) {
-        throw new Error('Batch not found');
-    }
+    if (!batch) throw new Error('Batch not found');
 
-    // Use Set to ensure unique student IDs
     const studentSet = new Set(batch.students.map((id) => id.toString()));
     studentIds.forEach((id) => studentSet.add(id.toString()));
 
@@ -86,21 +75,15 @@ export const assignStudentsToBatchService = async (batchId, studentIds) => {
 };
 
 /**
- * Service to update faculty assignment.
- * @param {string} batchId - The ID of the batch
- * @param {string} facultyId - The ID of the faculty to assign
- * @returns {Promise<Object>} The updated batch document
+ * Service to update faculty assignment
  */
 export const assignFacultyToBatchService = async (batchId, facultyId) => {
     const batch = await Batch.findByIdAndUpdate(
         batchId,
         { facultyId },
         { new: true, runValidators: true }
-    );
+    ).populate('facultyId', 'fullName email');
 
-    if (!batch) {
-        throw new Error('Batch not found');
-    }
-
+    if (!batch) throw new Error('Batch not found');
     return batch;
 };

@@ -1,14 +1,9 @@
 import { body, validationResult } from 'express-validator';
 
 export const createFacultyValidator = [
-    body('userId')
+    body('fullName')
         .notEmpty()
-        .withMessage('User ID is required')
-        .isMongoId()
-        .withMessage('Invalid User ID format'),
-    body('name')
-        .notEmpty()
-        .withMessage('Name is required')
+        .withMessage('Full Name is required')
         .trim(),
     body('email')
         .notEmpty()
@@ -16,14 +11,62 @@ export const createFacultyValidator = [
         .isEmail()
         .withMessage('Invalid email format')
         .normalizeEmail(),
+    body('department')
+        .notEmpty()
+        .withMessage('Department is required')
+        .isIn([
+            'School of Engineering',
+            'Business Management',
+            'Medical Sciences',
+            'Creative Arts',
+            'Computer Science',
+            'Social Sciences',
+            'Humanities',
+            'General Academics'
+        ])
+        .withMessage('Invalid department. Please select from the approved institutional list.'),
+    body('designation')
+        .notEmpty()
+        .withMessage('Designation is required')
+        .isIn([
+            'Professor',
+            'Associate Professor',
+            'Assistant Professor',
+            'Lecturer',
+            'Head of Department'
+        ])
+        .withMessage('Invalid designation. Please select a valid academic rank.'),
 ];
 
 export const updateFacultyValidator = [
-    body('name')
+    body('fullName')
         .optional()
         .isString()
-        .withMessage('Name must be a string')
+        .withMessage('Full Name must be a string')
         .trim(),
+    body('department')
+        .optional()
+        .isIn([
+            'School of Engineering',
+            'Business Management',
+            'Medical Sciences',
+            'Creative Arts',
+            'Computer Science',
+            'Social Sciences',
+            'Humanities',
+            'General Academics'
+        ])
+        .withMessage('Invalid department.'),
+    body('designation')
+        .optional()
+        .isIn([
+            'Professor',
+            'Associate Professor',
+            'Assistant Professor',
+            'Lecturer',
+            'Head of Department'
+        ])
+        .withMessage('Invalid designation.'),
     body('status')
         .optional()
         .isIn(['active', 'inactive'])

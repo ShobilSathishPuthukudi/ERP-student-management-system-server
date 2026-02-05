@@ -1,59 +1,116 @@
 import Student from './student.model.js';
 import Course from '../course/course.model.js';
+import Batch from '../batch/batch.model.js';
+import User from '../auth/user.model.js';
+import { hashPassword } from '../../utils/hashPassword.js';
 
 /**
  * Service to create a new student record
- * @param {Object} studentData - Data for the new student
- * @returns {Promise<Object>} The created student document
  */
 export const createStudentService = async (studentData) => {
     const {
-        name,
+        fullName,
         email,
         phone,
-        educationLevel,
-        currentCourse,
+        gender,
+        dob,
+        address,
+        courseId,
+        batchId,
         status,
         enrolledCourses,
     } = studentData;
 
-    // Check if student with same email already exists
     const existingStudent = await Student.findOne({ email });
     if (existingStudent) {
         throw new Error('Student with this email already exists');
     }
 
-    // Create and return the student document
+    // Age validation
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+
+    if (age < 15) {
+        throw new Error('Student must be at least 15 years old');
+    }
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+        throw new Error('Selected course not found');
+    }
+
+    if (course.minAge && age < course.minAge) {
+        throw new Error(`This course requires a minimum age of ${course.minAge} years`);
+    }
+
+    if (course.maxAge && age > course.maxAge) {
+        throw new Error(`This course has a maximum age limit of ${course.maxAge} years`);
+    }
+
+    // Check if user account already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+        throw new Error('User account with this email already exists');
+    }
+
+    // Always generate studentId automatically
+    const count = await Student.countDocuments();
+    const year = new Date().getFullYear();
+    const studentId = `STU-${year}-${(count + 1).toString().padStart(4, '0')}`;
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Create student profile
     const student = await Student.create({
-        name,
-        email,
+        studentId,
+        fullName,
+        email: normalizedEmail,
         phone,
-        educationLevel,
-        currentCourse,
-        status,
-        enrolledCourses,
+        gender,
+        dob,
+        address,
+        courseId,
+        batchId,
+        status: status || 'active',
+        enrolledCourses: enrolledCourses || [],
     });
 
-    return student;
+    // Create user account for the student
+    await User.create({
+        name: fullName,
+        email: normalizedEmail,
+        password: null, // No password for students
+        role: 'student',
+        isActive: true,
+    });
+
+    // Populate the newly created student for UI consistency
+    const populatedStudent = await Student.findById(student._id)
+        .populate('courseId', 'courseName department courseCode')
+        .populate('batchId', 'batchName scheduleInfo');
+
+    return populatedStudent;
 };
 
 /**
  * Service to fetch all students with optional filters
- * @param {Object} filters - Filter criteria (educationLevel, status, currentCourse)
- * @returns {Promise<Array>} List of students sorted by createdAt descending
  */
 export const getAllStudentsService = async (filters) => {
-    const { educationLevel, status, currentCourse } = filters;
+    const { status, courseId, batchId } = filters;
 
-    // Build dynamic MongoDB filter object
     const query = {};
-    if (educationLevel) query.educationLevel = educationLevel;
     if (status) query.status = status;
-    if (currentCourse) query.currentCourse = currentCourse;
+    if (courseId) query.courseId = courseId;
+    if (batchId) query.batchId = batchId;
 
-    // Fetch students, populate currentCourse, and sort by newest first
     const students = await Student.find(query)
-        .populate('currentCourse', 'courseName mode')
+        .populate('courseId', 'courseName department courseCode')
+        .populate('batchId', 'batchName scheduleInfo')
         .sort({ createdAt: -1 });
 
     return students;
@@ -61,12 +118,11 @@ export const getAllStudentsService = async (filters) => {
 
 /**
  * Service to fetch a single student by ID
- * @param {string} studentId - The ID of the student
- * @returns {Promise<Object>} The student document with populated references
  */
 export const getStudentByIdService = async (studentId) => {
     const student = await Student.findById(studentId)
-        .populate('currentCourse')
+        .populate('courseId')
+        .populate('batchId')
         .populate('enrolledCourses');
 
     if (!student) {
@@ -78,15 +134,13 @@ export const getStudentByIdService = async (studentId) => {
 
 /**
  * Service to update an existing student record
- * @param {string} studentId - The ID of the student to update
- * @param {Object} updateData - Data to update
- * @returns {Promise<Object>} The updated student document
  */
 export const updateStudentService = async (studentId, updateData) => {
     const student = await Student.findByIdAndUpdate(studentId, updateData, {
         new: true,
         runValidators: true,
-    });
+    }).populate('courseId', 'courseName department courseCode')
+        .populate('batchId', 'batchName scheduleInfo');
 
     if (!student) {
         throw new Error('Student not found');
@@ -97,28 +151,18 @@ export const updateStudentService = async (studentId, updateData) => {
 
 /**
  * Service to enroll a student in an online course
- * @param {string} studentId - The ID of the student
- * @param {string} courseId - The ID of the course to enroll in
- * @returns {Promise<Object>} The updated student document
  */
 export const enrollOnlineCourseService = async (studentId, courseId) => {
-    // Fetch course by ID to check its mode
     const course = await Course.findById(courseId);
     if (!course) {
         throw new Error('Course not found');
     }
 
-    if (course.mode !== 'Online') {
-        throw new Error('Only online courses can be self-enrolled');
-    }
-
-    // Find student and push courseId into enrolledCourses if not already present
     const student = await Student.findById(studentId);
     if (!student) {
         throw new Error('Student not found');
     }
 
-    // Check if already enrolled
     const isAlreadyEnrolled = student.enrolledCourses.some(
         (id) => id.toString() === courseId.toString()
     );

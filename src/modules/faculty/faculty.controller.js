@@ -3,6 +3,7 @@ import {
     getAllFaculty as getAllFacultyService,
     getFacultyById as getFacultyByIdService,
     updateFaculty as updateFacultyService,
+    deleteFaculty as deleteFacultyService,
 } from './faculty.service.js';
 
 export const createFaculty = async (req, res) => {
@@ -64,6 +65,22 @@ export const updateFaculty = async (req, res) => {
             success: true,
             message: 'Faculty updated successfully',
             data: faculty,
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+export const deleteFaculty = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await deleteFacultyService(id);
+
+        res.status(200).json({
+            success: true,
+            message: 'Faculty deleted successfully',
         });
     } catch (error) {
         res.status(400).json({

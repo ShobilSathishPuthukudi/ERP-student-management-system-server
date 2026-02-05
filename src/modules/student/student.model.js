@@ -2,34 +2,50 @@ import mongoose from 'mongoose';
 
 const studentSchema = new mongoose.Schema(
     {
-        name: {
+        studentId: {
+            type: String,
+            required: true,
+            unique: true,
+        },
+        fullName: {
             type: String,
             required: true,
         },
         email: {
             type: String,
             required: true,
+            unique: true,
         },
         phone: {
             type: String,
             required: true,
         },
-        educationLevel: {
+        gender: {
             type: String,
-            enum: ['UG', 'PG', 'Paramedical', 'Arts', 'Skill-Improvement'],
+            enum: ['Male', 'Female', 'Other'],
+        },
+        dob: {
+            type: Date,
             required: true,
         },
-        currentCourse: {
+        address: {
+            type: String,
+        },
+        courseId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Course',
             required: true,
+        },
+        batchId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Batch',
         },
         status: {
             type: String,
             enum: ["active", "inactive"],
             default: 'active',
         },
-        enrolledCourses: [{ type: ObjectId, ref: "Course" }]
+        enrolledCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Course" }]
     },
     {
         timestamps: true,

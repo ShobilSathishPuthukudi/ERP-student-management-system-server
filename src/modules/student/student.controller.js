@@ -6,14 +6,15 @@ import {
     enrollOnlineCourseService,
 } from './student.service.js';
 import Student from './student.model.js';
+import User from '../auth/user.model.js';
 
-export const createStudent = async (req, res) => {
+export const createStudent = async (req, res, next) => {
     try {
         const student = await createStudentService(req.body);
 
         res.status(201).json({
             success: true,
-            message: 'Student created successfully',
+            message: `Student created successfully. Login credentials: Email: ${student.email}, Registration ID: ${student.studentId}, Birthday: ${new Date(student.dob).toLocaleDateString()}`,
             data: student,
         });
     } catch (error) {
@@ -24,13 +25,13 @@ export const createStudent = async (req, res) => {
     }
 };
 
-export const getStudents = async (req, res) => {
+export const getStudents = async (req, res, next) => {
     try {
-        const { educationLevel, status, currentCourse } = req.query;
+        const { status, courseId, batchId } = req.query;
         const students = await getAllStudentsService({
-            educationLevel,
             status,
-            currentCourse,
+            courseId,
+            batchId,
         });
 
         res.status(200).json({
@@ -45,7 +46,7 @@ export const getStudents = async (req, res) => {
     }
 };
 
-export const getStudentById = async (req, res) => {
+export const getStudentById = async (req, res, next) => {
     try {
         const student = await getStudentByIdService(req.params.id);
 
@@ -54,14 +55,34 @@ export const getStudentById = async (req, res) => {
             data: student,
         });
     } catch (error) {
-        res.status(404).json({
-            success: false,
-            message: error.message,
-        });
+        next(error);
     }
 };
 
-export const updateStudent = async (req, res) => {
+export const getStudentProfile = async (req, res, next) => {
+    try {
+        const student = await Student.findOne({ email: req.user.email })
+            .populate('courseId')
+            .populate('batchId')
+            .populate('enrolledCourses');
+
+        if (!student) {
+            return res.status(404).json({
+                success: false,
+                message: 'Student profile not found',
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: student,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const updateStudent = async (req, res, next) => {
     try {
         const student = await updateStudentService(req.params.id, req.body);
 
@@ -78,7 +99,7 @@ export const updateStudent = async (req, res) => {
     }
 };
 
-export const enrollOnlineCourse = async (req, res) => {
+export const enrollOnlineCourse = async (req, res, next) => {
     try {
         const { studentId, courseId } = req.body;
         const student = await enrollOnlineCourseService(studentId, courseId);
@@ -96,11 +117,11 @@ export const enrollOnlineCourse = async (req, res) => {
     }
 };
 
-export const deleteStudent = async (req, res) => {
+export const deleteStudent = async (req, res, next) => {
     try {
         const { id } = req.params;
 
-        const student = await Student.findByIdAndDelete(id);
+        const student = await Student.findById(id);
 
         if (!student) {
             return res.status(404).json({
@@ -109,9 +130,15 @@ export const deleteStudent = async (req, res) => {
             });
         }
 
+        // Delete the associated user account
+        await User.findOneAndDelete({ email: student.email });
+
+        // Delete the student profile
+        await Student.findByIdAndDelete(id);
+
         res.status(200).json({
             success: true,
-            message: 'Student deleted successfully',
+            message: 'Student and associated user account deleted successfully',
         });
     } catch (error) {
         res.status(500).json({

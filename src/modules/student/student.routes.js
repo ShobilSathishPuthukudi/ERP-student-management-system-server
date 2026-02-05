@@ -3,6 +3,7 @@ import {
     createStudent,
     getStudents,
     getStudentById,
+    getStudentProfile,
     updateStudent,
     deleteStudent,
     enrollOnlineCourse,
@@ -19,6 +20,7 @@ router.use(authMiddleware);
 
 // Admin only: Create, Update, Delete students
 router.post('/', authorizeRoles('admin'), createStudentValidator, validate, createStudent);
+router.get('/me', authorizeRoles('student'), getStudentProfile);
 router.put('/:id', authorizeRoles('admin'), updateStudentValidator, validate, updateStudent);
 router.delete('/:id', authorizeRoles('admin'), deleteStudent);
 

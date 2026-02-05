@@ -15,7 +15,7 @@ const batchSchema = new mongoose.Schema(
         },
         facultyId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
+            ref: 'Faculty',
             required: true,
         },
         students: [
@@ -30,6 +30,13 @@ const batchSchema = new mongoose.Schema(
         },
         endDate: {
             type: Date,
+        },
+        maxStudents: {
+            type: Number,
+            required: true,
+        },
+        scheduleInfo: {
+            type: String,
         },
         status: {
             type: String,

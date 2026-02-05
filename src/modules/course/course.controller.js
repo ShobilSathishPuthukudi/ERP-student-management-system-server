@@ -3,9 +3,10 @@ import {
     getCoursesService,
     getCourseByIdService,
     updateCourseService,
+    deleteCourseService,
 } from './course.service.js';
 
-export const createCourse = async (req, res) => {
+export const createCourse = async (req, res, next) => {
     try {
         const course = await createCourseService(req.body);
 
@@ -22,7 +23,7 @@ export const createCourse = async (req, res) => {
     }
 };
 
-export const getCourses = async (req, res) => {
+export const getCourses = async (req, res, next) => {
     try {
         const { category, department, mode } = req.query;
         const courses = await getCoursesService({ category, department, mode });
@@ -32,14 +33,11 @@ export const getCourses = async (req, res) => {
             data: courses,
         });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        next(error);
     }
 };
 
-export const getCourseById = async (req, res) => {
+export const getCourseById = async (req, res, next) => {
     try {
         const course = await getCourseByIdService(req.params.id);
 
@@ -48,14 +46,11 @@ export const getCourseById = async (req, res) => {
             data: course,
         });
     } catch (error) {
-        res.status(404).json({
-            success: false,
-            message: error.message,
-        });
+        next(error);
     }
 };
 
-export const updateCourse = async (req, res) => {
+export const updateCourse = async (req, res, next) => {
     try {
         const course = await updateCourseService(req.params.id, req.body);
 
@@ -63,6 +58,22 @@ export const updateCourse = async (req, res) => {
             success: true,
             message: 'Course updated successfully',
             data: course,
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            message: error.message,
+        });
+    }
+};
+
+export const deleteCourse = async (req, res, next) => {
+    try {
+        await deleteCourseService(req.params.id);
+
+        res.status(200).json({
+            success: true,
+            message: 'Course deleted successfully',
         });
     } catch (error) {
         res.status(400).json({

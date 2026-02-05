@@ -8,14 +8,17 @@ const courseSchema = new mongoose.Schema(
             trim: true,
             unique: true,
         },
-        duration: {
+        courseCode: {
             type: String,
             required: true,
-            trim: true,
+            unique: true,
         },
-        mode: {
-            type: String,
-            enum: ['Online', 'Offline', 'Hybrid'],
+        durationMonths: {
+            type: Number,
+            required: true,
+        },
+        credits: {
+            type: Number,
             required: true,
         },
         feeAmount: {
@@ -23,37 +26,25 @@ const courseSchema = new mongoose.Schema(
             required: true,
             min: 0,
         },
-        category: {
-            type: String,
-            enum: ['Postgraduate', 'Undergraduate', 'Paramedical', 'Arts', 'Skill-Improvement'],
-            required: true,
-        },
         department: {
             type: String,
             required: true,
-            trim: true,
-            enum: [
-                'Medical & Allied Sciences',
-                'School of Fine Arts',
-                'Humanities & Social Sciences',
-                'Professional Development Center',
-                'General Academics'
-            ],
         },
-        requirements: {
-            minQualification: {
-                type: String,
-                required: true,
-                trim: true,
-            },
-            hasLabWork: {
-                type: Boolean,
-                default: false,
-            },
+        description: {
+            type: String,
         },
-        isActive: {
-            type: Boolean,
-            default: true,
+        status: {
+            type: String,
+            enum: ['active', 'inactive'],
+            default: 'active',
+        },
+        minAge: {
+            type: Number,
+            default: 15,
+            min: 15,
+        },
+        maxAge: {
+            type: Number,
         },
     },
     {

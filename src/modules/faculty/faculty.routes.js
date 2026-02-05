@@ -4,6 +4,7 @@ import {
     getAllFaculty,
     getFacultyById,
     updateFaculty,
+    deleteFaculty,
 } from './faculty.controller.js';
 import { authMiddleware } from '../../middlewares/auth.middleware.js';
 import { authorizeRoles } from '../../middlewares/role.middleware.js';
@@ -21,6 +22,7 @@ router.use(authMiddleware);
 // Admin only: Add or Update Faculty
 router.post('/', authorizeRoles('admin'), createFacultyValidator, validate, createFaculty);
 router.put('/:id', authorizeRoles('admin'), updateFacultyValidator, validate, updateFaculty);
+router.delete('/:id', authorizeRoles('admin'), deleteFaculty);
 
 // Admin and Students can view all faculty
 router.get('/', authorizeRoles('admin', 'student'), getAllFaculty);

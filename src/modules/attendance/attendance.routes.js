@@ -1,6 +1,7 @@
 import express from 'express';
 import {
     markAttendance,
+    getAttendance,
     getBatchAttendance,
     getStudentPersonalAttendance,
 } from './attendance.controller.js';
@@ -18,7 +19,10 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // Mark Attendance: Faculty and Admin only
-router.post('/mark', authorizeRoles('faculty', 'admin'), markAttendanceValidator, validate, markAttendance);
+router.post('/', authorizeRoles('faculty', 'admin'), markAttendanceValidator, validate, markAttendance);
+
+// View Attendance with filters
+router.get('/', authorizeRoles('faculty', 'admin'), getAttendance);
 
 // View Batch Attendance: Faculty and Admin
 router.get('/batch/:batchId', authorizeRoles('faculty', 'admin'), getAttendanceQueryValidator, validate, getBatchAttendance);

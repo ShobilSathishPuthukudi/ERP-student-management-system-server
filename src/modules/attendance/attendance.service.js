@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Attendance from './attendance.model.js';
 import Batch from '../batch/batch.model.js';
 
@@ -46,16 +47,41 @@ export const markAttendanceService = async (attendanceData) => {
  */
 export const getBatchAttendanceService = async (batchId, queryParams = {}) => {
     const { startDate, endDate } = queryParams;
-    const filter = { batchId };
+    let filter = {};
+
+    // If batchId is provided, try to handle it as ID or name
+    if (batchId) {
+        if (mongoose.Types.ObjectId.isValid(batchId)) {
+            filter.batchId = batchId;
+        } else {
+            // Find batch by name first
+            const batch = await Batch.findOne({ batchName: batchId });
+            if (batch) {
+                filter.batchId = batch._id;
+            } else {
+                // If not found by name and not a valid ID, we'll likely find nothing
+                return [];
+            }
+        }
+    }
 
     if (startDate || endDate) {
         filter.date = {};
-        if (startDate) filter.date.$gte = new Date(startDate);
-        if (endDate) filter.date.$lte = new Date(endDate);
+        if (startDate) {
+            const start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+            filter.date.$gte = start;
+        }
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            filter.date.$lte = end;
+        }
     }
 
     return await Attendance.find(filter)
-        .populate('students.studentId', 'name email')
+        .populate('batchId', 'batchName')
+        .populate('students.studentId', 'fullName email studentId')
         .sort({ date: -1 });
 };
 

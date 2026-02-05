@@ -1,91 +1,81 @@
 import Course from './course.model.js';
 
 /**
- * Service to create a new course with business logic validation.
- * @param {Object} courseData - Data to create the course
- * @returns {Promise<Object>} The created course document
+ * Service to create a new course
  */
 export const createCourseService = async (courseData) => {
     const {
         courseName,
-        duration,
-        mode,
+        courseCode,
+        durationMonths,
+        credits,
         feeAmount,
-        category,
         department,
-        requirements,
+        description,
+        status
     } = courseData;
 
-    // Check if course with same name already exists
-    const existingCourse = await Course.findOne({ courseName });
-    if (existingCourse) {
-        throw new Error('A course with this name already exists');
-    }
-
-    // Create and return the new course document
-    const course = await Course.create({
-        courseName,
-        duration,
-        mode,
-        feeAmount,
-        category,
-        department,
-        requirements,
+    const existingCourse = await Course.findOne({
+        $or: [{ courseName }, { courseCode }]
     });
 
-    return course;
+    if (existingCourse) {
+        throw new Error('A course with this name or code already exists');
+    }
+
+    return await Course.create({
+        courseName,
+        courseCode,
+        durationMonths,
+        credits,
+        feeAmount,
+        department,
+        description,
+        status
+    });
 };
 
 /**
- * Service to fetch all courses based on dynamic filters.
- * @param {Object} filters - Filter criteria (category, department, mode)
- * @returns {Promise<Array>} List of courses sorted by createdAt descending
+ * Service to fetch all courses
  */
 export const getCoursesService = async (filters) => {
-    const { category, department, mode } = filters;
-
-    // Build a MongoDB filter object dynamically
+    const { department, status } = filters;
     const query = {};
-    if (category) query.category = category;
     if (department) query.department = department;
-    if (mode) query.mode = mode;
+    if (status) query.status = status;
 
-    // Fetch courses with filters and sort by newest first
-    const courses = await Course.find(query).sort({ createdAt: -1 });
-
-    return courses;
+    return await Course.find(query).sort({ createdAt: -1 });
 };
 
 /**
- * Service to fetch a single course by its ID.
- * @param {string} courseId - The ID of the course
- * @returns {Promise<Object>} The course document
+ * Service to fetch a single course
  */
 export const getCourseByIdService = async (courseId) => {
     const course = await Course.findById(courseId);
-
-    if (!course) {
-        throw new Error('Course not found');
-    }
-
+    if (!course) throw new Error('Course not found');
     return course;
 };
 
 /**
- * Service to update an existing course.
- * @param {string} courseId - The ID of the course to update
- * @param {Object} updateData - Fields to update
- * @returns {Promise<Object>} The updated course document
+ * Service to update an existing course
  */
 export const updateCourseService = async (courseId, updateData) => {
     const course = await Course.findByIdAndUpdate(courseId, updateData, {
         new: true,
         runValidators: true,
     });
-
-    if (!course) {
-        throw new Error('Course not found');
-    }
-
+    if (!course) throw new Error('Course not found');
     return course;
+};
+
+/**
+ * Service to delete an existing course
+ */
+export const deleteCourseService = async (courseId) => {
+    const course = await Course.findById(courseId);
+    if (!course) throw new Error('Course not found');
+
+    // Deleting a course is a destructive operation.
+    // In a real system, you might want to check for dependencies here.
+    return await Course.findByIdAndDelete(courseId);
 };

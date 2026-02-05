@@ -5,7 +5,7 @@ import {
     logoutService,
 } from './auth.service.js';
 
-export const register = async (req, res) => {
+export const register = async (req, res, next) => {
     try {
         const { user, accessToken, refreshToken } = await registerUser(req.body);
 
@@ -31,10 +31,11 @@ export const register = async (req, res) => {
     }
 };
 
-export const login = async (req, res) => {
+export const login = async (req, res, next) => {
     try {
-        const { email, password } = req.body;
-        const { user, accessToken, refreshToken } = await loginUser(email, password);
+        console.log('[Login Controller] Request Body:', JSON.stringify(req.body));
+        const { email, password, studentId, facultyId, dob, role } = req.body;
+        const { user, accessToken, refreshToken } = await loginUser({ email, password, studentId, facultyId, dob, role });
 
         res.status(200).json({
             success: true,
@@ -58,7 +59,7 @@ export const login = async (req, res) => {
     }
 };
 
-export const refreshToken = async (req, res) => {
+export const refreshToken = async (req, res, next) => {
     try {
         const { refreshToken } = req.body;
         const { accessToken } = await refreshAccessTokenService(refreshToken);
@@ -75,7 +76,7 @@ export const refreshToken = async (req, res) => {
     }
 };
 
-export const logout = async (req, res) => {
+export const logout = async (req, res, next) => {
     try {
         await logoutService(req.user.id);
 
@@ -84,14 +85,11 @@ export const logout = async (req, res) => {
             message: 'Logged out successfully',
         });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        next(error);
     }
 };
 
-export const adminCreateUser = async (req, res) => {
+export const adminCreateUser = async (req, res, next) => {
     try {
         const { user } = await registerUser(req.body);
 
@@ -114,3 +112,4 @@ export const adminCreateUser = async (req, res) => {
         });
     }
 };
+

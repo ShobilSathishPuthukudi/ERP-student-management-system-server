@@ -5,7 +5,7 @@ import {
     updateFeeService,
 } from './fee.service.js';
 
-export const createFee = async (req, res) => {
+export const createFee = async (req, res, next) => {
     try {
         const fee = await createFeeService(req.body);
 
@@ -22,7 +22,7 @@ export const createFee = async (req, res) => {
     }
 };
 
-export const getFees = async (req, res) => {
+export const getFees = async (req, res, next) => {
     try {
         const { studentId, paymentStatus } = req.query;
         const fees = await getAllFeesService({ studentId, paymentStatus });
@@ -32,14 +32,11 @@ export const getFees = async (req, res) => {
             data: fees,
         });
     } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message,
-        });
+        next(error);
     }
 };
 
-export const getFeeById = async (req, res) => {
+export const getFeeById = async (req, res, next) => {
     try {
         const fee = await getFeeByIdService(req.params.id);
 
@@ -48,14 +45,11 @@ export const getFeeById = async (req, res) => {
             data: fee,
         });
     } catch (error) {
-        res.status(404).json({
-            success: false,
-            message: error.message,
-        });
+        next(error);
     }
 };
 
-export const updateFee = async (req, res) => {
+export const updateFee = async (req, res, next) => {
     try {
         const fee = await updateFeeService(req.params.id, req.body);
 
