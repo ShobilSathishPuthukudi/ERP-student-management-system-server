@@ -31,26 +31,17 @@ app.use(cors({
             'http://localhost:5174',
             'http://127.0.0.1:5173',
             'http://localhost:3000',
-            'http://localhost:5001',
-            'http://127.0.0.1:5001',
-            'http://127.0.0.1:3000',
-        ];
+            process.env.CLIENT_URL, // From Vercel
+        ].filter(Boolean); // Remove undefined/null
 
-        // Allow requests with no origin (like mobile apps or curl or Postman)
-        if (!origin) {
-            console.log(`[CORS] No origin. Access granted.`);
-            return callback(null, true);
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
         }
-
-        // Check if origin is in allowed list
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        }
-
-        // For development, we log but allow broadly if it looks safe or just allow it to unblock.
-        // To be safe but flexible:
-        console.log(`[CORS] Origin ${origin} is not in explicit list, but allowed for DEV.`);
-        return callback(null, true);
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
